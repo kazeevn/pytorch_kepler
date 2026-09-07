@@ -1026,6 +1026,7 @@ inline c10::MaybeOwned<TensorBase> TensorBase::expect_contiguous(MemoryFormat me
 
 namespace symint {
 
+#if defined(__cpp_concepts) && (__cplusplus >= 202002L)
 template <typename T>
     requires std::is_same_v<T, c10::SymInt>
 c10::SymIntArrayRef sizes(const TensorBase& t) { return t.sym_sizes(); }
@@ -1053,6 +1054,27 @@ c10::SymInt numel(const TensorBase& t) { return t.sym_numel(); }
 template <typename T>
     requires std::is_same_v<T, int64_t>
 int64_t numel(const TensorBase& t) { return t.numel(); }
+#else
+template <typename T, std::enable_if_t<std::is_same_v<T, c10::SymInt>, int> = 0>
+c10::SymIntArrayRef sizes(const TensorBase& t) { return t.sym_sizes(); }
+template <typename T, std::enable_if_t<std::is_same_v<T, int64_t>, int> = 0>
+IntArrayRef sizes(const TensorBase& t) { return t.sizes(); }
+
+template <typename T, std::enable_if_t<std::is_same_v<T, c10::SymInt>, int> = 0>
+c10::SymInt size(const TensorBase& t, int64_t dim) { return t.sym_size(dim); }
+template <typename T, std::enable_if_t<std::is_same_v<T, int64_t>, int> = 0>
+int64_t size(const TensorBase& t, int64_t dim) { return t.size(dim); }
+
+template <typename T, std::enable_if_t<std::is_same_v<T, c10::SymInt>, int> = 0>
+c10::SymIntArrayRef strides(const TensorBase& t) { return t.sym_strides(); }
+template <typename T, std::enable_if_t<std::is_same_v<T, int64_t>, int> = 0>
+IntArrayRef strides(const TensorBase& t) { return t.strides(); }
+
+template <typename T, std::enable_if_t<std::is_same_v<T, c10::SymInt>, int> = 0>
+c10::SymInt numel(const TensorBase& t) { return t.sym_numel(); }
+template <typename T, std::enable_if_t<std::is_same_v<T, int64_t>, int> = 0>
+int64_t numel(const TensorBase& t) { return t.numel(); }
+#endif
 
 } // namespace symint
 

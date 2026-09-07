@@ -121,6 +121,17 @@ class TORCH_CUDA_CPP_API CuSparseBsrsm2Info
 
 cusparseIndexType_t getCuSparseIndexType(const c10::ScalarType& scalar_type);
 
+#if (defined(CUDA_VERSION) && (CUDA_VERSION < 12000)) || (defined(CUSPARSE_VERSION) && (CUSPARSE_VERSION < 12000))
+  class TORCH_CUDA_CPP_API CuSparseDnMatDescriptor
+      : public CuSparseDescriptor<
+            cusparseDnMatDescr,
+            &cusparseDestroyDnMat> {
+   public:
+    explicit CuSparseDnMatDescriptor(
+        const Tensor& input,
+        int64_t batch_offset = -1);
+  };
+#else
   class TORCH_CUDA_CPP_API CuSparseDnMatDescriptor
       : public ConstCuSparseDescriptor<
             cusparseDnMatDescr,
@@ -130,6 +141,7 @@ cusparseIndexType_t getCuSparseIndexType(const c10::ScalarType& scalar_type);
         const Tensor& input,
         int64_t batch_offset = -1);
   };
+#endif
 
   class TORCH_CUDA_CPP_API CuSparseConstDnMatDescriptor
       : public ConstCuSparseDescriptor<
@@ -147,6 +159,20 @@ cusparseIndexType_t getCuSparseIndexType(const c10::ScalarType& scalar_type);
   }
   };
 
+#if (defined(CUDA_VERSION) && (CUDA_VERSION < 12000)) || (defined(CUSPARSE_VERSION) && (CUSPARSE_VERSION < 12000))
+  class TORCH_CUDA_CPP_API CuSparseDnVecDescriptor
+      : public CuSparseDescriptor<
+            cusparseDnVecDescr,
+            &cusparseDestroyDnVec> {
+   public:
+    explicit CuSparseDnVecDescriptor(const Tensor& input);
+  };
+
+  class TORCH_CUDA_CPP_API CuSparseSpMatDescriptor
+      : public CuSparseDescriptor<
+            cusparseSpMatDescr,
+            &cusparseDestroySpMat> {};
+#else
   class TORCH_CUDA_CPP_API CuSparseDnVecDescriptor
       : public ConstCuSparseDescriptor<
             cusparseDnVecDescr,
@@ -159,6 +185,7 @@ cusparseIndexType_t getCuSparseIndexType(const c10::ScalarType& scalar_type);
       : public ConstCuSparseDescriptor<
             cusparseSpMatDescr,
             &cusparseDestroySpMat> {};
+#endif
 
 class TORCH_CUDA_CPP_API CuSparseSpMatCsrDescriptor
     : public CuSparseSpMatDescriptor {

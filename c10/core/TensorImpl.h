@@ -2947,6 +2947,28 @@ struct C10_API TensorImpl : public c10::intrusive_ptr_target {
   // (which do not have a device.)
   std::optional<c10::Device> device_opt_;
 
+#if defined(__CUDACC__)
+  bool is_contiguous_ : 1;
+  bool storage_access_should_throw_ : 1;
+  bool is_channels_last_ : 1;
+  bool is_channels_last_contiguous_ : 1;
+  bool is_channels_last_3d_ : 1;
+  bool is_channels_last_3d_contiguous_ : 1;
+  bool is_non_overlapping_and_dense_ : 1;
+  bool is_wrapped_number_ : 1;
+  bool allow_tensor_metadata_change_ : 1;
+  bool reserved_ : 1;
+  uint8_t sizes_strides_policy_ : 2;
+  bool has_symbolic_sizes_strides_ : 1;
+  uint8_t custom_sizes_strides_ : 2;
+  bool device_policy_ : 1;
+  bool layout_policy_ : 1;
+  bool custom_device_ : 1;
+  bool custom_layout_ : 1;
+  uint8_t python_custom_sizes_strides_ : 2;
+  bool python_custom_device_ : 1;
+  bool python_custom_layout_ : 1;
+#else
   // Tensor is contiguous
   bool is_contiguous_ : 1 = true;
 
@@ -3038,6 +3060,7 @@ struct C10_API TensorImpl : public c10::intrusive_ptr_target {
 
   // Call into Python for layout()
   bool python_custom_layout_ : 1 = false;
+#endif
 
   // The set of DispatchKeys which describe this tensor.  NB: this
   // does NOT include Autograd (historically, it did, but

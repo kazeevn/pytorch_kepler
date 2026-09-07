@@ -227,6 +227,18 @@ class OptionalArrayRef final {
     return a1.value() == other;
   }
 
+  [[nodiscard]] friend bool operator==(ArrayRef<T> other, OptionalArrayRef a1) {
+    return a1 == other;
+  }
+
+  [[nodiscard]] friend bool operator!=(ArrayRef<T> other, OptionalArrayRef a1) {
+    return !(other == a1);
+  }
+
+  [[nodiscard]] friend bool operator!=(OptionalArrayRef a1, ArrayRef<T> other) {
+    return !(a1 == other);
+  }
+
  private:
   std::optional<ArrayRef<T>> wrapped_opt_array_ref;
 };

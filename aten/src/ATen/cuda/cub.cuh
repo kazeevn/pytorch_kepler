@@ -18,6 +18,9 @@
 #include <ATen/cuda/Exceptions.h>
 #include <c10/cuda/CUDACachingAllocator.h>
 #include <c10/cuda/CUDAStream.h>
+#include <ATen/cuda/ThrustAllocator.h>
+#include <thrust/unique.h>
+#include <thrust/execution_policy.h>
 
 // handle the temporary storage and 'twice' calls for cub API
 #define CUB_WRAPPER(func, ...) do {                                       \
@@ -190,6 +193,7 @@ inline void segmented_sort_pairs(
   }
 }
 
+#if CUB_SUPPORTS_UNIQUE_BY_KEY()
 template <typename KeysInputIteratorT, typename ValuesInputIteratorT, typename ValuesOutputIteratorT, typename NumSelectedIteratorT>
 inline void unique_by_key(
   KeysInputIteratorT keys_in, ValuesInputIteratorT values_in,
@@ -205,6 +209,38 @@ inline void unique_by_key(
   CUB_WRAPPER(NO_ROCM(at_cuda_detail)::cub::DeviceSelect::UniqueByKey,
     keys_in, values_in, keys_out_, values_out, num_selected, num_input_items, c10::cuda::getCurrentCUDAStream());
 }
+#else
+namespace impl {
+template <typename NumSelectedIteratorT>
+__global__ void write_count_kernel(NumSelectedIteratorT num_selected, int64_t count) {
+  *num_selected = count;
+}
+} // namespace impl
+
+template <typename KeysInputIteratorT, typename ValuesInputIteratorT, typename ValuesOutputIteratorT, typename NumSelectedIteratorT>
+inline void unique_by_key(
+  KeysInputIteratorT keys_in, ValuesInputIteratorT values_in,
+  ValuesOutputIteratorT values_out,
+  NumSelectedIteratorT num_selected, int64_t num_input_items)
+{
+  using KeyT = typename std::iterator_traits<KeysInputIteratorT>::value_type;
+  auto allocator = c10::cuda::CUDACachingAllocator::get();
+  c10::DataPtr keys_out_owner;
+  keys_out_owner = allocator->allocate(num_input_items * sizeof(KeyT));
+  auto keys_out_ = static_cast<KeyT *>(keys_out_owner.get());
+  auto stream = c10::cuda::getCurrentCUDAStream();
+  at::cuda::ThrustAllocator thrust_allocator;
+  auto policy = thrust::cuda::par(thrust_allocator).on(stream);
+  auto ends = thrust::unique_by_key_copy(
+    policy,
+    keys_in, keys_in + num_input_items,
+    values_in,
+    keys_out_, values_out);
+  int64_t count = thrust::get<0>(ends) - keys_out_;
+  impl::write_count_kernel<<<1, 1, 0, stream>>>(num_selected, count);
+  C10_CUDA_KERNEL_LAUNCH_CHECK();
+}
+#endif
 
 namespace impl {
 

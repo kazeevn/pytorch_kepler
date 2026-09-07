@@ -44,11 +44,13 @@ set_property(TARGET torch::magma
 
 # Check for Magma V2
 include(CheckPrototypeDefinition)
+set(CMAKE_REQUIRED_INCLUDES "${MAGMA_INCLUDE_DIR}" "${CUDA_INCLUDE_DIRS}" "${CUDAToolkit_INCLUDE_DIRS}" "/usr/local/cuda/include")
 check_prototype_definition(magma_get_sgeqrf_nb
   "magma_int_t magma_get_sgeqrf_nb( magma_int_t m, magma_int_t n );"
   "0"
   "magma.h"
   MAGMA_V2)
+unset(CMAKE_REQUIRED_INCLUDES)
 if(MAGMA_V2)
   set_property(TARGET torch::magma
                PROPERTY INTERFACE_COMPILE_DEFINITIONS "MAGMA_V2")

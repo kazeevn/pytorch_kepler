@@ -120,7 +120,10 @@ constexpr auto elems_per_thread_128b(size_t output_size) {
   } else if constexpr (input_size >= 128) {
     return 1;
   } else {
-    constexpr auto rounded_input_size = std::bit_ceil(input_size);
+    size_t rounded_input_size = 1;
+    while (rounded_input_size < input_size) {
+      rounded_input_size <<= 1;
+    }
     return static_cast<int>(128 / rounded_input_size);
   }
 }

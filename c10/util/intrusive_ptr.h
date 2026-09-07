@@ -4,7 +4,12 @@
 #include <c10/util/MaybeOwned.h>
 #include <atomic>
 #include <climits>
+#if __has_include(<compare>) && defined(__cpp_impl_three_way_comparison) && (__cplusplus >= 202002L)
 #include <compare>
+#define C10_HAS_THREE_WAY_COMPARISON() 1
+#else
+#define C10_HAS_THREE_WAY_COMPARISON() 0
+#endif
 #include <memory>
 #include <type_traits>
 
@@ -770,12 +775,39 @@ inline void swap(
 // Pointer ordering and equality for intrusive_ptr.
 // operator<=> gives us <, >, <=, >=; operator== gives us !=.
 // clang-format off
+#if C10_HAS_THREE_WAY_COMPARISON()
 template <class TTarget1, class NullType1, class TTarget2, class NullType2>
 [[nodiscard]] inline std::strong_ordering operator<=>(
     const intrusive_ptr<TTarget1, NullType1>& lhs,
     const intrusive_ptr<TTarget2, NullType2>& rhs) noexcept {
   return lhs.get() <=> rhs.get();
 }
+#else
+template <class TTarget1, class NullType1, class TTarget2, class NullType2>
+inline bool operator<(
+    const intrusive_ptr<TTarget1, NullType1>& lhs,
+    const intrusive_ptr<TTarget2, NullType2>& rhs) noexcept {
+  return lhs.get() < rhs.get();
+}
+template <class TTarget1, class NullType1, class TTarget2, class NullType2>
+inline bool operator<=(
+    const intrusive_ptr<TTarget1, NullType1>& lhs,
+    const intrusive_ptr<TTarget2, NullType2>& rhs) noexcept {
+  return lhs.get() <= rhs.get();
+}
+template <class TTarget1, class NullType1, class TTarget2, class NullType2>
+inline bool operator>(
+    const intrusive_ptr<TTarget1, NullType1>& lhs,
+    const intrusive_ptr<TTarget2, NullType2>& rhs) noexcept {
+  return lhs.get() > rhs.get();
+}
+template <class TTarget1, class NullType1, class TTarget2, class NullType2>
+inline bool operator>=(
+    const intrusive_ptr<TTarget1, NullType1>& lhs,
+    const intrusive_ptr<TTarget2, NullType2>& rhs) noexcept {
+  return lhs.get() >= rhs.get();
+}
+#endif
 // clang-format on
 
 template <class TTarget1, class NullType1, class TTarget2, class NullType2>
@@ -1099,10 +1131,17 @@ class weak_intrusive_ptr final {
   }
 
   // clang-format off
+#if C10_HAS_THREE_WAY_COMPARISON()
   template <class TTarget1, class NullType1, class TTarget2, class NullType2>
   friend std::strong_ordering operator<=>(
       const weak_intrusive_ptr<TTarget1, NullType1>& lhs,
       const weak_intrusive_ptr<TTarget2, NullType2>& rhs) noexcept;
+#else
+  template <class TTarget1, class NullType1, class TTarget2, class NullType2>
+  friend bool operator<(
+      const weak_intrusive_ptr<TTarget1, NullType1>& lhs,
+      const weak_intrusive_ptr<TTarget2, NullType2>& rhs) noexcept;
+#endif
   // clang-format on
   template <class TTarget1, class NullType1, class TTarget2, class NullType2>
   friend bool operator==(
@@ -1119,12 +1158,39 @@ inline void swap(
 
 // Pointer ordering and equality for weak_intrusive_ptr.
 // clang-format off
+#if C10_HAS_THREE_WAY_COMPARISON()
 template <class TTarget1, class NullType1, class TTarget2, class NullType2>
 [[nodiscard]] inline std::strong_ordering operator<=>(
     const weak_intrusive_ptr<TTarget1, NullType1>& lhs,
     const weak_intrusive_ptr<TTarget2, NullType2>& rhs) noexcept {
   return lhs.target_ <=> rhs.target_;
 }
+#else
+template <class TTarget1, class NullType1, class TTarget2, class NullType2>
+inline bool operator<(
+    const weak_intrusive_ptr<TTarget1, NullType1>& lhs,
+    const weak_intrusive_ptr<TTarget2, NullType2>& rhs) noexcept {
+  return lhs.target_ < rhs.target_;
+}
+template <class TTarget1, class NullType1, class TTarget2, class NullType2>
+inline bool operator<=(
+    const weak_intrusive_ptr<TTarget1, NullType1>& lhs,
+    const weak_intrusive_ptr<TTarget2, NullType2>& rhs) noexcept {
+  return lhs.target_ <= rhs.target_;
+}
+template <class TTarget1, class NullType1, class TTarget2, class NullType2>
+inline bool operator>(
+    const weak_intrusive_ptr<TTarget1, NullType1>& lhs,
+    const weak_intrusive_ptr<TTarget2, NullType2>& rhs) noexcept {
+  return lhs.target_ > rhs.target_;
+}
+template <class TTarget1, class NullType1, class TTarget2, class NullType2>
+inline bool operator>=(
+    const weak_intrusive_ptr<TTarget1, NullType1>& lhs,
+    const weak_intrusive_ptr<TTarget2, NullType2>& rhs) noexcept {
+  return lhs.target_ >= rhs.target_;
+}
+#endif
 // clang-format on
 
 template <class TTarget1, class NullType1, class TTarget2, class NullType2>

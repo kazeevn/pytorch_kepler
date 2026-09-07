@@ -1297,8 +1297,11 @@ void CudaCodeGen::CompileToNVRTC(
       "compute_" +
 #endif
       std::to_string(major) + std::to_string(minor);
+  int nvrtc_major = 0, nvrtc_minor = 0;
+  AT_CUDA_NVRTC_CHECK(nvrtc().nvrtcVersion(&nvrtc_major, &nvrtc_minor));
+  const char* std_flag = (nvrtc_major >= 12) ? "--std=c++20" : "--std=c++17";
   const std::vector<const char*> args = {
-      "--std=c++20", compute.c_str(), "-default-device"};
+      std_flag, compute.c_str(), "-default-device"};
 #endif
 
   auto result = nvrtc().nvrtcCompileProgram(

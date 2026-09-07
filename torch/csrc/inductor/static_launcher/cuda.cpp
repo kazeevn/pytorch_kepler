@@ -106,6 +106,8 @@ CUdeviceptr getPointer(PyObject* obj) {
 }
 
 #if !defined(USE_ROCM)
+#include <cuda.h>
+#if CUDA_VERSION >= 12000
 // CUtensorMap is a fixed 128-byte CUDA driver ABI type passed to the kernel by
 // value; catch a header change to its size at compile time.
 static_assert(
@@ -150,6 +152,11 @@ void* getTmaDescPtr(PyObject* obj) {
   TORCH_CHECK(host_ptr != 0, "tma_desc_cpu_ptr() returned NULL");
   return reinterpret_cast<void*>(host_ptr);
 }
+#else
+void* getTmaDescPtr(PyObject* /*obj*/) {
+  TORCH_CHECK(false, "tensordesc kernel args require CUDA 12.0 or later");
+}
+#endif
 #endif
 
 #define SHARED_MEM_STATIC_MAX 49152 // 48 KB

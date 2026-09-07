@@ -54,10 +54,8 @@ if(EXISTS "${_cutedsl_src}")
     RENAME "__init__.py"
   )
 elseif(USE_CUDA)
-  message(FATAL_ERROR
-    "CuTeDSL source not found at ${_cutedsl_src}.\n"
-    "The cutlass submodule may be missing. Please run:\n"
-    "  git submodule update --init --recursive"
+  message(STATUS
+    "CuTeDSL source not found at ${_cutedsl_src} - skipping."
   )
 endif()
 

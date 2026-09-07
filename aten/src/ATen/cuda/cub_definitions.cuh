@@ -18,6 +18,12 @@
 
 #define USE_GLOBAL_CUB_WRAPPED_NAMESPACE() true
 
+#if CUB_VERSION >= 101600
+#define CUB_SUPPORTS_UNIQUE_BY_KEY() true
+#else
+#define CUB_SUPPORTS_UNIQUE_BY_KEY() false
+#endif
+
 // There were many bc-breaking changes in major version release of CCCL v3.0.0
 // Please see https://github.com/NVIDIA/cccl/blob/main/docs/cccl/3.0_migration_guide.rst
 #if CUB_VERSION >= 300400
