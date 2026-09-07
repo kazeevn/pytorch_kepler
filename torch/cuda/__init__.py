@@ -337,6 +337,8 @@ class _CompatSet:
 #   are merely rules based on sm compatibility guarantees for NVIDIA
 #   devices while accounting for incompatibility of iGPU and dGPU.
 DEVICE_REQUIREMENT: dict[int, _CompatSet | _CompatInterval] = {
+    35: _CompatInterval(start=35),
+    37: _CompatInterval(start=37),
     50: _CompatInterval(start=50, exclude={53}),
     52: _CompatInterval(start=52, exclude={53}),
     53: _CompatSet({53}),

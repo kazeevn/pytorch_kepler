@@ -80,12 +80,21 @@ struct C10_API AutogradState {
 
  private:
   std::optional<SafePyObject> graph_exec_group_;
+#if defined(__CUDACC__)
+  bool grad_mode_ : 1;
+  bool inference_mode_ : 1;
+  bool fw_grad_mode_ : 1;
+  bool multithreading_enabled_ : 1;
+  bool view_replay_enabled_ : 1;
+  bool grad_layout_enforcement_enabled_ : 1;
+#else
   bool grad_mode_ : 1 = true;
   bool inference_mode_ : 1 = false;
   bool fw_grad_mode_ : 1 = true;
   bool multithreading_enabled_ : 1 = true;
   bool view_replay_enabled_ : 1 = false;
   bool grad_layout_enforcement_enabled_ : 1 = true;
+#endif
 };
 
 } // namespace c10

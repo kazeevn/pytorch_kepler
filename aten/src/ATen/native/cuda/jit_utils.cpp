@@ -1613,8 +1613,9 @@ NvrtcFunction jit_pwise_function(
   const std::string compute = std::string("--gpu-architecture=") +
       (compile_to_sass ? "sm_" : "compute_") + std::to_string(cuda_major) +
       std::to_string(cuda_minor);
+  const char* std_flag = (nvrtc_major >= 12) ? "--std=c++20" : "--std=c++17";
   std::vector<const char*> args = {
-      "--std=c++20", compute.c_str(), "-default-device"};
+      std_flag, compute.c_str(), "-default-device"};
 #endif
 
   #ifndef NDEBUG

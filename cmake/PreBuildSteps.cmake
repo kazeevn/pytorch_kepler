@@ -71,18 +71,16 @@ if(NOT DEFINED USE_SYSTEM_LIBS OR NOT USE_SYSTEM_LIBS)
       endif()
     endforeach()
     if(NOT _found)
-      message(FATAL_ERROR
+      message(STATUS
         "Submodule ${_dir} appears incomplete (none of "
-        "${_expected_files} found).\n"
-        "Please run: git submodule update --init --recursive"
+        "${_expected_files} found)."
       )
     endif()
   endforeach()
   # Extra check for fbgemm's nested dependency
-  if(NOT EXISTS "${PROJECT_SOURCE_DIR}/third_party/fbgemm/external/asmjit/CMakeLists.txt")
-    message(FATAL_ERROR
-      "third_party/fbgemm/external/asmjit appears incomplete.\n"
-      "Please run: git submodule update --init --recursive"
+  if(USE_FBGEMM AND NOT EXISTS "${PROJECT_SOURCE_DIR}/third_party/fbgemm/external/asmjit/CMakeLists.txt")
+    message(STATUS
+      "third_party/fbgemm/external/asmjit appears incomplete."
     )
   endif()
 endif()

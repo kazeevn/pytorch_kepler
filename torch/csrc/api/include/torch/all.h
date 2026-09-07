@@ -1,6 +1,6 @@
 #pragma once
 
-#if !defined(_MSC_VER) && __cplusplus < 202002L
+#if !defined(_MSC_VER) && !defined(__CUDACC__) && __cplusplus < 202002L
 #error C++20 or later compatible compiler is required to use PyTorch.
 #endif
 

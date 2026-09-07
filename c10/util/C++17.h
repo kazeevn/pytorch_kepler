@@ -8,9 +8,7 @@
 
 namespace c10::guts {
 
-#if defined(__HIP__)
-
-// std::apply is not available in HIP device code because it lacks
+// std::apply is not available in CUDA/HIP device code because it lacks
 // __host__ __device__ annotations in the standard library.
 namespace detail {
 template <class F, class Tuple, std::size_t... INDEX>
@@ -30,8 +28,6 @@ C10_HOST_DEVICE constexpr auto apply(F&& f, Tuple&& t) {
       std::make_index_sequence<
           std::tuple_size<std::remove_reference_t<Tuple>>::value>{});
 }
-
-#endif
 
 } // namespace c10::guts
 

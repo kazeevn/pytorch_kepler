@@ -82,6 +82,12 @@ DriverAPI create_driver_api() {
 
 void* get_symbol(const char* name, int version) {
   void* out = nullptr;
+#if defined(CUDA_VERSION) && (CUDA_VERSION < 12000)
+  if (auto st = cudaGetDriverEntryPoint(name, &out, cudaEnableDefault);
+      st == cudaSuccess && out) {
+    return out;
+  }
+#else
   cudaDriverEntryPointQueryResult qres{};
 
   // CUDA 12.5+ supports version-based lookup
@@ -100,6 +106,7 @@ void* get_symbol(const char* name, int version) {
       st == cudaSuccess && qres == cudaDriverEntryPointSuccess && out) {
     return out;
   }
+#endif
 #endif
 
   // If the symbol cannot be resolved, report and return nullptr;

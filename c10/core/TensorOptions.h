@@ -545,6 +545,17 @@ struct C10_API TensorOptions {
   // Bitmask required here to get this to fit inside 32 bits (or even 64 bits,
   // for that matter)
 
+#if defined(__CUDACC__)
+  bool requires_grad_ : 1;
+  bool pinned_memory_ : 1;
+
+  bool has_device_ : 1;
+  bool has_dtype_ : 1;
+  bool has_layout_ : 1;
+  bool has_requires_grad_ : 1;
+  bool has_pinned_memory_ : 1;
+  bool has_memory_format_ : 1;
+#else
   bool requires_grad_ : 1 = false;
   bool pinned_memory_ : 1 = false;
 
@@ -554,6 +565,7 @@ struct C10_API TensorOptions {
   bool has_requires_grad_ : 1 = false;
   bool has_pinned_memory_ : 1 = false;
   bool has_memory_format_ : 1 = false;
+#endif
 };
 
 // We should aspire to fit in one machine-size word; but a size greater than two

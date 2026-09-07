@@ -22,6 +22,19 @@
 #include <hip/hip_runtime_api.h>
 #endif
 
+#if defined(CUDA_VERSION) && CUDA_VERSION < 12030
+#ifndef CU_MEM_HANDLE_TYPE_FABRIC
+#define CU_MEM_HANDLE_TYPE_FABRIC ((CUmemAllocationHandleType)0x8ULL)
+#endif
+#ifndef CU_IPC_HANDLE_SIZE
+#define CU_IPC_HANDLE_SIZE 64
+#endif
+typedef struct CUmemFabricHandle_st {
+  unsigned char data[CU_IPC_HANDLE_SIZE];
+} CUmemFabricHandle_v1;
+typedef CUmemFabricHandle_v1 CUmemFabricHandle;
+#endif
+
 #if defined(CUDART_VERSION) && CUDART_VERSION >= 12030
 #define CUDART_SUPPORTS_MULTICAST
 #endif
@@ -474,7 +487,7 @@ void CUDASymmetricMemoryAllocator::free(void* ptr) {
 size_t CUDASymmetricMemoryAllocator::get_alloc_size(void* ptr) {
   auto block = find_block(ptr);
   TORCH_CHECK(
-      block != nullptr,
+      block.get() != nullptr,
       "CUDASymmetricMemoryAllocator::get_alloc_size: input must be allocated ",
       "via CUDASymmetricMemoryAllocator::alloc");
   return block->buffer_size;
@@ -1040,7 +1053,7 @@ c10::intrusive_ptr<Block> CUDASymmetricMemoryAllocator::find_block_covering(void
 }
 
 bool CUDASymmetricMemoryAllocator::has_allocation(void* ptr) {
-  return find_block(ptr) != nullptr;
+  return find_block(ptr).get() != nullptr;
 }
 
 struct RegisterCUDASymmetricMemoryAllocator {

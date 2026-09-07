@@ -368,10 +368,34 @@ TORCH_IMPL_FUNC(_linalg_det_out)(const Tensor& A, const Tensor& result, const Te
 }
 
 Tensor linalg_det(const Tensor& A) {
+  if (A.dim() >= 2 && A.size(-1) == 3 && A.size(-2) == 3) {
+    auto a00 = A.select(-2, 0).select(-1, 0);
+    auto a01 = A.select(-2, 0).select(-1, 1);
+    auto a02 = A.select(-2, 0).select(-1, 2);
+    auto a10 = A.select(-2, 1).select(-1, 0);
+    auto a11 = A.select(-2, 1).select(-1, 1);
+    auto a12 = A.select(-2, 1).select(-1, 2);
+    auto a20 = A.select(-2, 2).select(-1, 0);
+    auto a21 = A.select(-2, 2).select(-1, 1);
+    auto a22 = A.select(-2, 2).select(-1, 2);
+    return a00 * (a11 * a22 - a12 * a21) - a01 * (a10 * a22 - a12 * a20) + a02 * (a10 * a21 - a11 * a20);
+  }
+  if (A.dim() >= 2 && A.size(-1) == 2 && A.size(-2) == 2) {
+    auto a00 = A.select(-2, 0).select(-1, 0);
+    auto a01 = A.select(-2, 0).select(-1, 1);
+    auto a10 = A.select(-2, 1).select(-1, 0);
+    auto a11 = A.select(-2, 1).select(-1, 1);
+    return a00 * a11 - a01 * a10;
+  }
   return std::get<0>(at::_linalg_det(A));
 }
 
 Tensor& linalg_det_out(const Tensor& A, Tensor& result) {
+  if (A.dim() >= 2 && ((A.size(-1) == 3 && A.size(-2) == 3) || (A.size(-1) == 2 && A.size(-2) == 2))) {
+    auto res = at::native::linalg_det(A);
+    result.resize_as_(res).copy_(res);
+    return result;
+  }
   auto LU = at::empty({0}, A.options());
   auto pivots = at::empty({0}, A.options().dtype(kInt));
   at::_linalg_det_out(result, LU, pivots, A);
