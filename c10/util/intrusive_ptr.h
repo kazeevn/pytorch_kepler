@@ -823,6 +823,27 @@ template <class TTarget1, class NullType1>
     std::nullptr_t) noexcept {
   return lhs.get() == nullptr;
 }
+
+template <class TTarget1, class NullType1>
+[[nodiscard]] inline bool operator==(
+    std::nullptr_t,
+    const intrusive_ptr<TTarget1, NullType1>& rhs) noexcept {
+  return rhs.get() == nullptr;
+}
+
+template <class TTarget1, class NullType1>
+[[nodiscard]] inline bool operator!=(
+    const intrusive_ptr<TTarget1, NullType1>& lhs,
+    std::nullptr_t) noexcept {
+  return lhs.get() != nullptr;
+}
+
+template <class TTarget1, class NullType1>
+[[nodiscard]] inline bool operator!=(
+    std::nullptr_t,
+    const intrusive_ptr<TTarget1, NullType1>& rhs) noexcept {
+  return rhs.get() != nullptr;
+}
 template <typename T>
 struct MaybeOwnedTraits<c10::intrusive_ptr<T>> {
   using owned_type = c10::intrusive_ptr<T>;

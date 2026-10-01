@@ -868,12 +868,16 @@ class BuildExtension(_LazyBuildExt):
         else:
             original_compile = self.compiler._compile
 
-        def append_std17_if_no_std_present(cflags) -> None:
+        def append_std17_if_no_std_present(cflags, is_cuda=False) -> None:
             # NVCC does not allow multiple -std to be passed, so we avoid
             # overriding the option if the user explicitly passed it.
             cpp_format_prefix = '/{}:' if self.compiler.compiler_type == 'msvc' else '-{}='
             cpp_flag_prefix = cpp_format_prefix.format('std')
-            cpp_flag = cpp_flag_prefix + 'c++20'
+            if is_cuda and torch.version.cuda is not None and Version(torch.version.cuda) < Version('12.0'):
+                cpp_std = 'c++17'
+            else:
+                cpp_std = 'c++20'
+            cpp_flag = cpp_flag_prefix + cpp_std
             if not any(flag.startswith(cpp_flag_prefix) for flag in cflags):
                 cflags.append(cpp_flag)
 
@@ -884,7 +888,7 @@ class BuildExtension(_LazyBuildExt):
 
             # NVCC does not allow multiple -ccbin/--compiler-bindir to be passed, so we avoid
             # overriding the option if the user explicitly passed it.
-            _ccbin = os.getenv("CC")
+            _ccbin = os.getenv("CUDAHOSTCXX") or os.getenv("CC")
             if (
                 _ccbin is not None
                 and not any(flag.startswith(('-ccbin', '--compiler-bindir')) for flag in cflags)
@@ -914,13 +918,14 @@ class BuildExtension(_LazyBuildExt):
                         cflags = COMMON_HIPCC_FLAGS + cflags + _get_rocm_arch_flags(cflags)
                     else:
                         cflags = unix_cuda_flags(cflags)
+                    append_std17_if_no_std_present(cflags, is_cuda=True)
                 else:
                     self.compiler.set_executable('compiler_so', _wrap_compiler(list(original_compiler)))
                     if isinstance(cflags, dict):
                         cflags = cflags['cxx']
+                    append_std17_if_no_std_present(cflags, is_cuda=False)
                 if IS_HIP_EXTENSION:
                     cflags = COMMON_HIP_FLAGS + cflags
-                append_std17_if_no_std_present(cflags)
 
                 original_compile(obj, src, ext, cc_args, cflags, pp_opts)
             finally:
@@ -3028,8 +3033,11 @@ def _write_ninja_file_to_build_library(path,
             cuda_flags += ['--compiler-options', "'-fPIC'"]
             cuda_flags += extra_cuda_cflags
             if not any(flag.startswith('-std=') for flag in cuda_flags):
-                cuda_flags.append('-std=c++20')
-            cc_env = os.getenv("CC")
+                if torch.version.cuda is not None and Version(torch.version.cuda) < Version('12.0'):
+                    cuda_flags.append('-std=c++17')
+                else:
+                    cuda_flags.append('-std=c++20')
+            cc_env = os.getenv("CUDAHOSTCXX") or os.getenv("CC")
             if cc_env is not None:
                 cuda_flags = ['-ccbin', cc_env] + cuda_flags
     else:

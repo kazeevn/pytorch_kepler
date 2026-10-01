@@ -19,7 +19,7 @@ struct Edge {
 
   /// Convenience method to test if an edge is valid.
   bool is_valid() const noexcept {
-    return function != nullptr;
+    return static_cast<bool>(function);
   }
 
   // Required for use in associative containers.
